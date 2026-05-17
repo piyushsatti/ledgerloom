@@ -1,0 +1,51 @@
+# Data (sensitive financial documents)
+data/
+cache/
+
+# Generated
+ledgerloom.db
+ledgerloom.db-shm
+ledgerloom.db-wal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# OS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+
+# Env files
+.env
+.env.*
+
+# Config (private — copy from *.example and fill in personal values)
+config/user_config.yaml
+config/categories.yaml
+config/merchants.yaml
+
+# Personal analyses — your /analyze, /budget, /habits outputs live here
+docs/private/
+
+# Claude Code local settings (machine-specific paths)
+.claude/settings.local.json
+
+# Serena agent state — LSP cache + per-machine memories.
+# Run /init to regenerate memories on a fresh fork.
+.serena/
+
+# Planning docs (personal project notes, stay local)
+planning/
+
+# Private docs subdirectories
+docs/plans/
+docs/specs/
+
+# Spec validation reports — regenerable artifacts with absolute paths
+specs/.validation/

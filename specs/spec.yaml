@@ -1,0 +1,20 @@
+name: ledgerloom
+framework_version: 0.1.0
+created: 2026-05-20
+started_from_template: standard
+
+layers:
+  - name: intent
+    purpose: "why this project exists — stakeholder outcomes"
+    verdict_default: human_signoff
+  - name: capabilities
+    purpose: "externally observable behaviors (APIs, UI, events, CLI)"
+    verdict_default: llm_judge
+  - name: contracts
+    purpose: "internal typed commitments — producer/consumer/invariants"
+    verdict_default: llm_judge
+  - name: realizations
+    purpose: "files, modules, tests, configs"
+    verdict_default: automated_check
+
+validate_cost_ceiling: ""

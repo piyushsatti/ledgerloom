@@ -1,0 +1,7 @@
+# Canonical merchant names.
+# Keys: UPPERCASED raw description fragment (e.g. "TIM HORTONS").
+# Values: human-readable canonical name (e.g. "Tim Hortons").
+# Populated by /categorize as you review uncategorized transactions.
+# Example entry shape:
+#   RAW_FRAGMENT_UPPER: Canonical Name
+merchants: {}

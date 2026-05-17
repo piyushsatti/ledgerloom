@@ -1,0 +1,85 @@
+# Ordered category rules. First matching keyword wins (yaml document order).
+# Each row is a (category, subcategory, keywords) triple — mirrors the legacy
+# CATEGORY_RULES table. Shipped defaults below give a fresh fork working
+# behavior out of the box; /categorize appends new rules as the user labels
+# merchants.
+rules:
+  # Income
+  - { category: "Income",       subcategory: "Salary",          keywords: ["Payroll Deposit"] }
+  - { category: "Income",       subcategory: "Tax Refund",       keywords: ["Tax Refund", "GST CANADA"] }
+  - { category: "Income",       subcategory: "Wire",             keywords: ["Funds transfer credit"] }
+  - { category: "Income",       subcategory: "Interest",         keywords: ["Deposit interest", "Bonus deposit interest"] }
+  # Transfers
+  - { category: "Transfer",     subcategory: "e-Transfer In",   keywords: ["e-Transfer received", "e-Transfer - Autodeposit"] }
+  - { category: "Transfer",     subcategory: "e-Transfer Out",  keywords: ["e-Transfer sent"] }
+  - { category: "Transfer",     subcategory: "Internal",        keywords: ["Online Banking transfer", "Online Transfer to Deposit", "BR TO BR", "to Find & Save", "Auto transfer", "Find & Save from", "WWW transfer"] }
+  - { category: "Transfer",     subcategory: "Remittance",      keywords: ["International remittance"] }
+  # Bills
+  - { category: "Bills",        subcategory: "Phone",           keywords: ["Telco"] }
+  - { category: "Bills",        subcategory: "Transit Pass",    keywords: ["Transit Authority"] }
+  - { category: "Bills",        subcategory: "Gym",             keywords: ["Local Gym", "Fitness Center"] }
+  - { category: "Bills",        subcategory: "Bank Fee",        keywords: ["Monthly fee"] }
+  - { category: "Bills",        subcategory: "Overdraft",       keywords: ["Overdraft interest"] }
+  - { category: "Bills",        subcategory: "NSF Fee",         keywords: ["NSF item fee", "Annual NSF"] }
+  - { category: "Bills",        subcategory: "NSF Return",      keywords: ["Item returned NSF"] }
+  - { category: "Bills",        subcategory: "BNPL",            keywords: ["Affirm"] }
+  # Subscriptions
+  - { category: "Subscription", subcategory: "Claude AI",       keywords: ["Claude AI", "Anthropic"] }
+  - { category: "Subscription", subcategory: "OpenAI",          keywords: ["OpenAI"] }
+  - { category: "Subscription", subcategory: "Apple",           keywords: ["Apple (subscription)"] }
+  - { category: "Subscription", subcategory: "PayPal",          keywords: ["PayPal"] }
+  # Coffee / Tea
+  - { category: "Coffee/Tea",   subcategory: "Tim Hortons",     keywords: ["Tim Hortons"] }
+  - { category: "Coffee/Tea",   subcategory: "Starbucks",       keywords: ["Starbucks"] }
+  - { category: "Coffee/Tea",   subcategory: "Second Cup",      keywords: ["Second Cup"] }
+  - { category: "Coffee/Tea",   subcategory: "Coffee Shop A",   keywords: ["Coffee Shop A"] }
+  - { category: "Coffee/Tea",   subcategory: "Coffee Shop B",   keywords: ["Coffee Shop B"] }
+  # Fast Food
+  - { category: "Fast Food",    subcategory: "McDonald's",      keywords: ["McDonald's"] }
+  - { category: "Fast Food",    subcategory: "Subway",          keywords: ["Subway"] }
+  - { category: "Fast Food",    subcategory: "Pizza Hut",       keywords: ["Pizza Hut"] }
+  - { category: "Fast Food",    subcategory: "Pizza Pizza",     keywords: ["Pizza Pizza"] }
+  - { category: "Fast Food",    subcategory: "Dairy Queen",     keywords: ["Dairy Queen"] }
+  # Restaurants
+  - { category: "Restaurant",   subcategory: "Local Restaurant A", keywords: ["Local Restaurant A"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant B", keywords: ["Local Restaurant B"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant C", keywords: ["Local Restaurant C"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant D", keywords: ["Local Restaurant D"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant E", keywords: ["Local Restaurant E"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant F", keywords: ["Local Restaurant F"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant G", keywords: ["Local Restaurant G"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant H", keywords: ["Local Restaurant H"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant I", keywords: ["Local Restaurant I"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant J", keywords: ["Local Restaurant J"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant K", keywords: ["Local Restaurant K"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant L", keywords: ["Local Restaurant L"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant M", keywords: ["Local Restaurant M"] }
+  - { category: "Restaurant",   subcategory: "Local Restaurant N", keywords: ["Local Restaurant N"] }
+  # Groceries
+  - { category: "Groceries",    subcategory: "Local Market",    keywords: ["Local Market"] }
+  - { category: "Groceries",    subcategory: "Walmart",         keywords: ["Walmart"] }
+  - { category: "Groceries",    subcategory: "Supermarket A",   keywords: ["Supermarket A"] }
+  - { category: "Groceries",    subcategory: "Supermarket B",   keywords: ["Supermarket B"] }
+  - { category: "Groceries",    subcategory: "Supermarket C",   keywords: ["Supermarket C"] }
+  - { category: "Groceries",    subcategory: "Pharmacy",        keywords: ["Pharmacy"] }
+  - { category: "Groceries",    subcategory: "Grocery Store",   keywords: ["Grocery Store"] }
+  # Shopping
+  - { category: "Shopping",     subcategory: "Winners",         keywords: ["Winners"] }
+  - { category: "Shopping",     subcategory: "Old Navy",        keywords: ["Old Navy"] }
+  - { category: "Shopping",     subcategory: "Dollarama",       keywords: ["Dollarama"] }
+  - { category: "Shopping",     subcategory: "Canadian Tire",   keywords: ["Canadian Tire"] }
+  - { category: "Shopping",     subcategory: "IKEA",            keywords: ["IKEA"] }
+  - { category: "Shopping",     subcategory: "Apple Store",     keywords: ["Apple Store"] }
+  - { category: "Shopping",     subcategory: "Call It Spring",  keywords: ["Call It Spring"] }
+  - { category: "Shopping",     subcategory: "Nick the Tailor", keywords: ["Nick the Tailor"] }
+  - { category: "Shopping",     subcategory: "Liquidation",     keywords: ["Liquidation"] }
+  # Transport
+  - { category: "Transport",    subcategory: "Uber",            keywords: ["Uber"] }
+  - { category: "Transport",    subcategory: "ATM",             keywords: ["ATM withdrawal", "ATM deposit"] }
+  # Alcohol
+  - { category: "Alcohol",      subcategory: "Liquor Store",    keywords: ["Liquor Store"] }
+  # Entertainment
+  - { category: "Entertainment", subcategory: "Entertainment Venue", keywords: ["Entertainment Venue"] }
+  # Amex
+  - { category: "Amex",         subcategory: "Membership Fee",  keywords: ["MEMBERSHIP FEE"] }
+  - { category: "Amex",         subcategory: "Cash Back",       keywords: ["CASH BACK REWARD", "CREDIT BALANCE REFUND"] }
