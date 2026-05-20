@@ -82,3 +82,7 @@ ledgerloom.db                    # Generated SQLite database — gitignored
 
 - `CLAUDE.md` — philosophy, research references, contributor notes.
 - `docs/examples/anonymous-analysis.md` — what a `/analyze` output looks like.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
