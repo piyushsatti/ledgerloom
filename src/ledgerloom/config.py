@@ -53,22 +53,27 @@ class ConfigSchemaError(ValueError):
 class FixedObligation:
     name: str
     amount: float  # positive, in user_config.currency
-    cadence: str   # one of: "monthly", "weekly", "biweekly", "annual"
+    cadence: str  # one of: "monthly", "weekly", "biweekly", "annual"
 
 
 @dataclass(frozen=True, slots=True)
 class FinancialGoal:
     name: str
     target_amount: float  # positive
-    target_date: str      # ISO-8601 "YYYY-MM-DD"
+    target_date: str  # ISO-8601 "YYYY-MM-DD"
 
 
 @dataclass(frozen=True, slots=True)
 class DataSource:
-    name: str    # short identifier, e.g. "rbc", "rbc_credit"
-    kind: str    # "checking", "credit_card", "splitwise", "paypal"
+    name: str  # short identifier, e.g. "rbc", "rbc_credit"
+    kind: str  # "checking", "credit_card", "splitwise", "paypal"
     parser: str  # module name under ledgerloom.parsers
-    path: str    # relative to repo root
+    path: str  # relative to repo root
+    # Optional: account_suffix to route generic-CSV sources to an account
+    # (matches accounts.account_suffix). Falls back to `name` when absent.
+    # Must stay last / defaulted so existing 4-positional construction sites
+    # (PDF sources) are unaffected.
+    account_suffix: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,8 +93,8 @@ class UserConfig:
 @dataclass(frozen=True, slots=True)
 class CategoryRule:
     category: str
-    subcategory: str              # may be ""
-    keywords: tuple[str, ...]    # case-insensitive substrings
+    subcategory: str  # may be ""
+    keywords: tuple[str, ...]  # case-insensitive substrings
 
 
 # ---------------------------------------------------------------------------
@@ -183,9 +188,7 @@ def _check_config_file_exists(resolved: Path, filename: str, explicit: bool) -> 
     if not resolved.exists():
         if explicit:
             raise ConfigNotFoundError(str(resolved))
-        raise ConfigNotFoundError(
-            f"{filename} not found. Run /onboard to create it."
-        )
+        raise ConfigNotFoundError(f"{filename} not found. Run /onboard to create it.")
 
 
 # ---------------------------------------------------------------------------
@@ -200,9 +203,7 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
         )
 
     # Required scalar fields
-    name = _require_type(
-        _require_key(data, "name", filename), str, "name", filename
-    )
+    name = _require_type(_require_key(data, "name", filename), str, "name", filename)
     if not name:
         raise ConfigSchemaError(f"key 'name' in {filename}: expected non-empty str")
 
@@ -216,7 +217,10 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
         _require_key(data, "country", filename), str, "country", filename
     )
     tax_jurisdiction = _require_type(
-        _require_key(data, "tax_jurisdiction", filename), str, "tax_jurisdiction", filename
+        _require_key(data, "tax_jurisdiction", filename),
+        str,
+        "tax_jurisdiction",
+        filename,
     )
     if not _TAX_JURISDICTION_RE.match(tax_jurisdiction):
         raise ConfigSchemaError(
@@ -227,9 +231,7 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
     fys_raw = _require_key(data, "fiscal_year_start_month", filename)
     _require_type(fys_raw, int, "fiscal_year_start_month", filename)
     if not (1 <= fys_raw <= 12):
-        raise ConfigSchemaError(
-            f"fiscal_year_start_month must be 1..12, got {fys_raw}"
-        )
+        raise ConfigSchemaError(f"fiscal_year_start_month must be 1..12, got {fys_raw}")
 
     income_raw = _require_key(data, "monthly_income_after_tax", filename)
     if not isinstance(income_raw, (int, float)):
@@ -249,7 +251,10 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
     for i, item in enumerate(raw_obligations):
         _require_type(item, dict, f"fixed_obligations[{i}]", filename)
         obl_name = _require_type(
-            _require_key(item, "name", filename), str, f"fixed_obligations[{i}].name", filename
+            _require_key(item, "name", filename),
+            str,
+            f"fixed_obligations[{i}].name",
+            filename,
         )
         obl_amount_raw = _require_key(item, "amount", filename)
         if not isinstance(obl_amount_raw, (int, float)):
@@ -258,14 +263,18 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
                 f"got {type(obl_amount_raw).__name__}"
             )
         obl_cadence = _require_type(
-            _require_key(item, "cadence", filename), str,
-            f"fixed_obligations[{i}].cadence", filename
+            _require_key(item, "cadence", filename),
+            str,
+            f"fixed_obligations[{i}].cadence",
+            filename,
         )
         if obl_cadence not in _VALID_CADENCES:
             raise ConfigSchemaError(
                 f"cadence '{obl_cadence}' not in {{monthly,weekly,biweekly,annual}}"
             )
-        obligations.append(FixedObligation(obl_name, float(obl_amount_raw), obl_cadence))
+        obligations.append(
+            FixedObligation(obl_name, float(obl_amount_raw), obl_cadence)
+        )
 
     raw_goals = data.get("financial_goals") or []
     _require_type(raw_goals, list, "financial_goals", filename)
@@ -273,8 +282,10 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
     for i, item in enumerate(raw_goals):
         _require_type(item, dict, f"financial_goals[{i}]", filename)
         g_name = _require_type(
-            _require_key(item, "name", filename), str,
-            f"financial_goals[{i}].name", filename
+            _require_key(item, "name", filename),
+            str,
+            f"financial_goals[{i}].name",
+            filename,
         )
         g_amount_raw = _require_key(item, "target_amount", filename)
         if not isinstance(g_amount_raw, (int, float)):
@@ -283,8 +294,10 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
                 f"got {type(g_amount_raw).__name__}"
             )
         g_date = _require_type(
-            _require_key(item, "target_date", filename), str,
-            f"financial_goals[{i}].target_date", filename
+            _require_key(item, "target_date", filename),
+            str,
+            f"financial_goals[{i}].target_date",
+            filename,
         )
         goals.append(FinancialGoal(g_name, float(g_amount_raw), g_date))
 
@@ -300,12 +313,20 @@ def _validate_user_config(data: Any, filename: str) -> UserConfig:
             _require_key(item, "kind", filename), str, f"sources[{i}].kind", filename
         )
         s_parser = _require_type(
-            _require_key(item, "parser", filename), str, f"sources[{i}].parser", filename
+            _require_key(item, "parser", filename),
+            str,
+            f"sources[{i}].parser",
+            filename,
         )
         s_path = _require_type(
             _require_key(item, "path", filename), str, f"sources[{i}].path", filename
         )
-        sources.append(DataSource(s_name, s_kind, s_parser, s_path))
+        s_account_suffix = item.get("account_suffix")
+        if s_account_suffix is not None:
+            _require_type(
+                s_account_suffix, str, f"sources[{i}].account_suffix", filename
+            )
+        sources.append(DataSource(s_name, s_kind, s_parser, s_path, s_account_suffix))
 
     return UserConfig(
         name=name,
@@ -332,7 +353,10 @@ def _validate_categories(data: Any, filename: str) -> list[CategoryRule]:
     for i, item in enumerate(raw_rules):
         _require_type(item, dict, f"rules[{i}]", filename)
         cat = _require_type(
-            _require_key(item, "category", filename), str, f"rules[{i}].category", filename
+            _require_key(item, "category", filename),
+            str,
+            f"rules[{i}].category",
+            filename,
         )
         subcat = item.get("subcategory", "")
         if subcat is None:
@@ -460,11 +484,20 @@ def save_user_config(cfg: UserConfig, path: Path | None = None) -> None:
             for ob in cfg.fixed_obligations
         ],
         "financial_goals": [
-            {"name": g.name, "target_amount": g.target_amount, "target_date": g.target_date}
+            {
+                "name": g.name,
+                "target_amount": g.target_amount,
+                "target_date": g.target_date,
+            }
             for g in cfg.financial_goals
         ],
         "sources": [
             {"name": s.name, "kind": s.kind, "parser": s.parser, "path": s.path}
+            | (
+                {"account_suffix": s.account_suffix}
+                if s.account_suffix is not None
+                else {}
+            )
             for s in cfg.sources
         ],
     }
@@ -503,7 +536,9 @@ def append_merchant(
 
     resolved.parent.mkdir(parents=True, exist_ok=True)
     with resolved.open("w", encoding="utf-8") as fh:
-        yaml.safe_dump({"merchants": merchants}, fh, sort_keys=False, allow_unicode=True)
+        yaml.safe_dump(
+            {"merchants": merchants}, fh, sort_keys=False, allow_unicode=True
+        )
 
     _merchants_cache.pop(str(resolved), None)
 
@@ -527,11 +562,13 @@ def append_category_rule(rule: CategoryRule, path: Path | None = None) -> None:
     else:
         rules = []
 
-    rules.append({
-        "category": rule.category,
-        "subcategory": rule.subcategory,
-        "keywords": list(rule.keywords),
-    })
+    rules.append(
+        {
+            "category": rule.category,
+            "subcategory": rule.subcategory,
+            "keywords": list(rule.keywords),
+        }
+    )
 
     resolved.parent.mkdir(parents=True, exist_ok=True)
     with resolved.open("w", encoding="utf-8") as fh:

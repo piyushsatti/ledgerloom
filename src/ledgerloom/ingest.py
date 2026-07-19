@@ -13,6 +13,9 @@ from ledgerloom.parsers.rbc import parse_rbc_statement
 from ledgerloom.parsers.rbc_credit import parse_rbc_credit
 from ledgerloom.parsers.amex import parse_amex_statement
 from ledgerloom.parsers.splitwise import parse_splitwise_csv
+from ledgerloom.parsers.rbc_csv import parse_rbc_csv
+from ledgerloom.parsers.amex_csv import parse_amex_csv
+from ledgerloom.parsers.scotia import parse_scotia
 
 
 # ---------------------------------------------------------------------------
@@ -23,18 +26,22 @@ from ledgerloom.parsers.splitwise import parse_splitwise_csv
 # Values: (kind, callable) where kind ∈ {"pdf", "csv"}.
 #   - pdf callables: (text: str) -> ParseResult
 #   - csv callables: (path: str) -> tuple[list[SplitExpense], list[SplitPayment]]
-#     (splitwise) or (path: str) -> ParseResult (future generic csv parsers)
+#     (splitwise) or (path: str) -> ParseResult (generic csv parsers)
 PARSER_REGISTRY: dict[str, tuple[str, Callable]] = {
-    "rbc":        ("pdf", parse_rbc_statement),
+    "rbc": ("pdf", parse_rbc_statement),
     "rbc_credit": ("pdf", parse_rbc_credit),
-    "amex":       ("pdf", parse_amex_statement),
-    "splitwise":  ("csv", parse_splitwise_csv),
+    "amex": ("pdf", parse_amex_statement),
+    "splitwise": ("csv", parse_splitwise_csv),
+    "rbc_csv": ("csv", parse_rbc_csv),
+    "amex_csv": ("csv", parse_amex_csv),
+    "scotia": ("csv", parse_scotia),
 }
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _detect_account(pdf_path: Path) -> tuple[str, str]:
     """Determine account suffix and parser type from filename/path.
@@ -65,22 +72,25 @@ def _transform(txns: list[RawTransaction]) -> list[dict]:
         merchant_raw = extract_merchant(t.raw_description)
         merchant = normalize_merchant(merchant_raw)
         cat, subcat = categorize(merchant, t.raw_description)
-        results.append({
-            "date": t.date,
-            "raw_description": t.raw_description,
-            "merchant": merchant,
-            "amount": t.amount,
-            "balance": t.balance,
-            "tx_method": t.tx_method,
-            "category": cat,
-            "subcategory": subcat,
-        })
+        results.append(
+            {
+                "date": t.date,
+                "raw_description": t.raw_description,
+                "merchant": merchant,
+                "amount": t.amount,
+                "balance": t.balance,
+                "tx_method": t.tx_method,
+                "category": cat,
+                "subcategory": subcat,
+            }
+        )
     return results
 
 
 # ---------------------------------------------------------------------------
 # Per-file ingest helpers (unchanged public API)
 # ---------------------------------------------------------------------------
+
 
 def ingest_pdf(conn, pdf_path: Path, cache_dir: Path) -> int:
     """Full pipeline for one PDF. Returns transaction count, or 0 if already imported."""
@@ -130,6 +140,7 @@ def ingest_splitwise_csv(conn, csv_path: Path) -> tuple[int, int]:
 # Per-source ingest helper (new in P2.T8)
 # ---------------------------------------------------------------------------
 
+
 def ingest_source(conn, source: DataSource, cache_dir: Path) -> dict:
     """Ingest all files for one DataSource entry.
 
@@ -139,7 +150,13 @@ def ingest_source(conn, source: DataSource, cache_dir: Path) -> dict:
     Returns a stats-dict with keys: pdfs, transactions, sw_expenses,
     sw_payments, skipped.  Mirrors the shape returned by ingest_all.
     """
-    stats: dict = {"pdfs": 0, "transactions": 0, "sw_expenses": 0, "sw_payments": 0, "skipped": 0}
+    stats: dict = {
+        "pdfs": 0,
+        "transactions": 0,
+        "sw_expenses": 0,
+        "sw_payments": 0,
+        "skipped": 0,
+    }
 
     if source.parser not in PARSER_REGISTRY:
         raise ValueError(
@@ -174,7 +191,8 @@ def ingest_source(conn, source: DataSource, cache_dir: Path) -> dict:
                 if db.source_exists(conn, fhash):
                     stats["skipped"] += 1
                     continue
-                account_id = db.get_account_id(conn, source.name)
+                suffix = source.account_suffix or source.name
+                account_id = db.get_account_id(conn, suffix)
                 period_start = result.period[0] if result.period else None
                 period_end = result.period[1] if result.period else None
                 source_id = db.insert_source(
@@ -194,13 +212,20 @@ def ingest_source(conn, source: DataSource, cache_dir: Path) -> dict:
 # Backward-compat shim (P3.T4 will replace this)
 # ---------------------------------------------------------------------------
 
+
 def ingest_all(conn, data_dir: Path, cache_dir: Path) -> dict:
     """Scan data/ and ingest everything new. Returns summary stats.
 
     This shim is superseded by P3.T4 which iterates config.sources via
     PARSER_REGISTRY instead of scanning hardcoded directories.
     """
-    stats = {"pdfs": 0, "transactions": 0, "sw_expenses": 0, "sw_payments": 0, "skipped": 0}
+    stats = {
+        "pdfs": 0,
+        "transactions": 0,
+        "sw_expenses": 0,
+        "sw_payments": 0,
+        "skipped": 0,
+    }
 
     for pdf in sorted(data_dir.rglob("*.pdf")):
         count = ingest_pdf(conn, pdf, cache_dir)

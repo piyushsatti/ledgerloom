@@ -15,17 +15,33 @@ _TX_PREFIXES = [
     r"Visa Debit correction - \w+\s*",
     r"Online Banking payment - \w+\s*",
     r"Misc Payment\s*",
+    # Scotia CSV tx-type words (P3 generalization: combined description is
+    # "{Description} {Sub-description}", e.g. "pos purchase Apos Marche...").
+    r"Payroll Deposit\s*",
+    r"Pos Purchase\s*",
+    r"Withdrawal\s*",
+    r"Deposit\s*",
+    # Scotia POS sub-description artifact, e.g. "Apos Marche Tharsini".
+    r"Apos\s+",
 ]
 _PREFIX_RE = re.compile("|".join(f"^(?:{p})" for p in _TX_PREFIXES), re.IGNORECASE)
 
 
 def extract_merchant(raw_description: str) -> str | None:
-    """Strip transaction prefix and return the merchant portion.
+    """Strip transaction prefix(es) and return the merchant portion.
 
-    The prefix list (_TX_PREFIXES) is RBC-statement-format-bound.
-    Generalizing to other statement formats is P3 parser-skill scope.
+    The prefix list (_TX_PREFIXES) started RBC-PDF-statement-format-bound and
+    has been generalized (P3) to also cover Scotia's CSV format, which stacks
+    two prefixes ("pos purchase" tx-type word, then "Apos" POS artifact) on
+    one combined description. The regex is applied repeatedly until a pass
+    makes no further change, so stacked prefixes are all stripped.
     """
-    cleaned = _PREFIX_RE.sub("", raw_description).strip()
+    cleaned = raw_description.strip()
+    while True:
+        new_cleaned = _PREFIX_RE.sub("", cleaned).strip()
+        if new_cleaned == cleaned:
+            break
+        cleaned = new_cleaned
     return cleaned if cleaned else None
 
 

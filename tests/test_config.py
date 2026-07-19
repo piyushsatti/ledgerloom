@@ -376,3 +376,63 @@ def test_error_messages_match_contract(tmp_path):
     assert "cadence" in str(exc_info.value)
     assert "quarterly" in str(exc_info.value)
     assert "monthly" in str(exc_info.value)
+
+
+# ---------------------------------------------------------------------------
+# DataSource.account_suffix (optional field, backward-compat routing fix)
+# ---------------------------------------------------------------------------
+
+
+def test_data_source_without_account_suffix_defaults_none():
+    """Existing 4-positional construction (PDF sources) must stay unaffected."""
+    src = DataSource("rbc", "checking", "rbc", "data/rbc/")
+    assert src.account_suffix is None
+
+
+def test_data_source_with_account_suffix():
+    src = DataSource("scotia", "checking", "scotia", "data/scotia/", account_suffix="0588")
+    assert src.account_suffix == "0588"
+
+
+def test_load_user_config_reads_account_suffix(tmp_path):
+    cfg_file = tmp_path / "user_config.yaml"
+    data = {
+        **_MINIMAL_USER_CONFIG,
+        "sources": [
+            {"name": "scotia", "kind": "checking", "parser": "scotia",
+             "path": "data/scotia/", "account_suffix": "0588"},
+            {"name": "rbc", "kind": "checking", "parser": "rbc", "path": "data/rbc/"},
+        ],
+    }
+    _write_user_config(cfg_file, data)
+
+    cfg = load_user_config(cfg_file)
+
+    assert cfg.sources[0].account_suffix == "0588"
+    assert cfg.sources[1].account_suffix is None
+
+
+def test_save_user_config_omits_account_suffix_when_none(tmp_path):
+    """save_user_config must not emit a null account_suffix key for PDF sources."""
+    from ledgerloom.config import save_user_config, _read_yaml
+
+    cfg_file = tmp_path / "user_config.yaml"
+    cfg = UserConfig(
+        name="Test User", currency="CAD", locale="en-CA", country="CA",
+        tax_jurisdiction="CA-QC", fiscal_year_start_month=1,
+        monthly_income_after_tax=3000.0,
+        fixed_obligations=(), financial_goals=(),
+        sources=(
+            DataSource("rbc", "checking", "rbc", "data/rbc/"),
+            DataSource("scotia", "checking", "scotia", "data/scotia/", account_suffix="0588"),
+        ),
+    )
+    save_user_config(cfg, cfg_file)
+
+    raw = _read_yaml(cfg_file)
+    assert "account_suffix" not in raw["sources"][0]
+    assert raw["sources"][1]["account_suffix"] == "0588"
+
+    reloaded = load_user_config(cfg_file)
+    assert reloaded.sources[0].account_suffix is None
+    assert reloaded.sources[1].account_suffix == "0588"

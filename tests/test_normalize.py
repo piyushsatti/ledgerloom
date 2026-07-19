@@ -25,12 +25,34 @@ class TestExtractMerchant:
         assert result == "TELCO"
 
     def test_returns_raw_text_unchanged_when_no_known_prefix(self):
-        result = extract_merchant("Payroll Deposit WAL-MART CANADA")
-        assert result == "Payroll Deposit WAL-MART CANADA"
+        result = extract_merchant("Funds transfer credit WAL-MART CANADA")
+        assert result == "Funds transfer credit WAL-MART CANADA"
 
     def test_returns_none_for_empty_string(self):
         result = extract_merchant("")
         assert result is None
+
+    def test_strips_scotia_pos_purchase_and_apos_stacked_prefixes(self):
+        result = extract_merchant("pos purchase Apos Marche Tharsini Montr")
+        assert "Marche Tharsini" in result
+        assert "Apos" not in result
+        assert "pos purchase" not in result.lower()
+
+    def test_strips_scotia_withdrawal_prefix(self):
+        result = extract_merchant("withdrawal Free Interac E-Transfer")
+        assert result == "Free Interac E-Transfer"
+
+    def test_strips_scotia_payroll_deposit_prefix(self):
+        result = extract_merchant("payroll deposit People Center")
+        assert result == "People Center"
+
+    def test_strips_rbc_csv_visa_debit_purchase_with_numeric_id(self):
+        result = extract_merchant("VISA DEBIT PURCHASE - 2831 CHRONO-RECHARGE")
+        assert result == "CHRONO-RECHARGE"
+
+    def test_strips_rbc_csv_misc_payment(self):
+        result = extract_merchant("MISC PAYMENT PAYPAL")
+        assert result == "PAYPAL"
 
 
 class TestNormalizeMerchant:
