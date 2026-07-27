@@ -49,3 +49,6 @@ docs/specs/
 
 # Spec validation reports — regenerable artifacts with absolute paths
 specs/.validation/
+
+# Agent-owned local context — never tracked
+/CLAUDE.local.md
